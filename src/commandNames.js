@@ -1,0 +1,6 @@
+export const ADD_RULE_COMMAND_NAME = 'extension.synful.addRule'
+export const RELOAD_RULESET_COMMAND_NAME = 'extension.synful.reloadRuleset'
+export const REMOVE_RULE_COMMAND_NAME = 'extension.synful.removeRule'
+export const CLEAR_RULESET_COMMAND_NAME = 'extension.synful.clearRuleset'
+export const SAVE_RULESET_COMMAND_NAME = 'extension.synful.saveRuleset'
+export const LOAD_RULESET_COMMAND_NAME = 'extension.synful.loadRuleset'

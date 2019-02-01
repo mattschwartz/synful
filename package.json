@@ -1,0 +1,59 @@
+{
+    "name": "synful",
+    "displayName": "synful",
+    "description": "Arbitrary text syntax highlighting",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.30.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:extension.synful.addRule",
+        "onCommand:extension.synful.removeRule",
+        "onCommand:extension.synful.clearRuleset",
+        "onCommand:extension.synful.saveRuleset",
+        "onCommand:extension.synful.loadRuleset"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "extension.synful.addRule",
+                "title": "synful Add Rule"
+            },
+            {
+                "command": "extension.synful.removeRule",
+                "title": "synful Remove Rule"
+            },
+            {
+                "command": "extension.synful.clearRuleset",
+                "title": "synful Clear Ruleset"
+            },
+            {
+                "command": "extension.synful.saveRuleset",
+                "title": "synful Save Ruleset"
+            },
+            {
+                "command": "extension.synful.loadRuleset",
+                "title": "synful Load Ruleset"
+            }
+        ]
+    },
+    "scripts": {
+        "compile": "babel --watch --presets=@babel/preset-env src --out-dir out",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "@babel/cli": "^7.2.3",
+        "@babel/core": "^7.2.2",
+        "@babel/preset-env": "^7.3.1",
+        "@types/mocha": "^2.2.42",
+        "@types/node": "^8.10.25",
+        "eslint": "^4.11.0",
+        "typescript": "^3.1.4",
+        "vscode": "^1.1.25"
+    }
+}
