@@ -1,15 +1,21 @@
 import * as vscode from 'vscode'
-import { ADD_RULE_COMMAND_NAME, RELOAD_RULESET_COMMAND_NAME } from '../commandNames'
+import * as fsutil from '../util/fsutil'
+import * as rulesetUtil from '../util/rulesetUtil'
+import { ADD_RULE_COMMAND_NAME } from '../commandNames'
+
+const CURRENT_WORKING_RULESET = 'synful/current_working_ruleset'
+const ALL_WORKING_RULESETS = 'synful/all_working_rulesets'
 
 /**
  * Opens the config file for the ruleset so that the user can quickly get to
  * editing the rule
  */
-const openConfigToEdit = () => {
+const openConfigToEdit = filename => {
     console.log('[cmd::addRule] opening config file to edit rule')
+    fsutil.openFileInVSCode(filename)
 
-    // todo can we call this on config file save?
-    vscode.commands.executeCommand(RELOAD_RULESET_COMMAND_NAME)
+    // todo should we call this on config file save?
+    // vscode.commands.executeCommand(RELOAD_RULESET_COMMAND_NAME)
 }
 
 /**
@@ -19,6 +25,7 @@ const openConfigToEdit = () => {
  */
 const addRuleToConfig = (rulesetName, ruleName) => {
     console.log(`[cmd::addRule] adding rule '${ruleName}' to ruleset '${rulesetName}' config`)
+    rulesetUtil.addRuleToRuleset(rulesetName, ruleName)
 }
 
 /**
@@ -35,7 +42,7 @@ const showSetRulesetNameInputBox = () =>
  * Asks the user what the new rule should be called
  * @param {string} rulesetName
  */
-const showSetRuleNameInputBox = (rulesetName) => {
+const showSetRuleNameInputBox = rulesetName => {
     vscode.window.showInputBox({
         prompt: `Enter Rule Name for ruleset ${rulesetName}`,
         placeHolder: "rule name"
@@ -45,28 +52,45 @@ const showSetRuleNameInputBox = (rulesetName) => {
             return
         }
 
-        addRuleToConfig(rulesetName, ruleName)
-        openConfigToEdit()
+        const progressOptions = {
+            location: vscode.ProgressLocation.Notification,
+            title: 'Creating ruleset...'
+        }
+        const task = () => new Promise(resolve => {
+            addRuleToConfig(rulesetName, ruleName)
+            openConfigToEdit(rulesetName + '.js')
+            resolve()
+        })
+
+        vscode.window.withProgress(progressOptions, task)
     })
 }
 
 /**
- * Gets the current working ruleset name and returns it
- * @returns {string} the name of the current working ruleset, or undefined if not exists
- */
-const getWorkingRulesetName = () => undefined
-
-/**
  * Performs the addRule command
+ * @param {vscode.ExtensionContext} context
  */
-const enact = () => {
-    console.log('[cmd::addRule] called')
+const enact = context => {
+    const activeFilepath = vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.fileName
+    if (!activeFilepath) {
+        console.error('[cmd::addRule::FAILED] no file open - cannot apply rules!')
+        vscode.window.showErrorMessage('[synful::FAILED] No active file open: cannot apply rules.')
+        return
+    }
+
+    console.log('[cmd::addRule] called on current file:', activeFilepath)
+    const workingRuleset = false // context.workspaceState.get(CURRENT_WORKING_RULESET)
 
     // If no currently selected ruleset, ask user what ruleset should be named
-    let rulesetName = getWorkingRulesetName()
-    if (!rulesetName) {
+    if (!workingRuleset) {
         console.log('[cmd::addRule] no ruleset found')
         showSetRulesetNameInputBox()
+            .then(value => {
+                console.log('[cmd::addRule] creating file with name:', value)
+                rulesetUtil.saveNewRuleset(value, activeFilepath)
+
+                return value
+            })
             .then(value => {
                 if (!value) {
                     console.log('[cmd::addRule] user cancelled')
@@ -74,9 +98,12 @@ const enact = () => {
                     showSetRuleNameInputBox(value)
                 }
             })
+            .catch(reason => {
+                console.error('[cmd::addRule::FAILED] received an error:', reason)
+            })
     } else {
-        console.log('[cmd::addRule] found ruleset:', rulesetName)
-        showSetRuleNameInputBox(rulesetName)
+        console.log('[cmd::addRule] found ruleset:', workingRuleset)
+        showSetRuleNameInputBox(workingRuleset)
     }
 }
 
@@ -86,7 +113,7 @@ const enact = () => {
 export const register = (context) => {
     const disposable = vscode.commands.registerCommand(
         ADD_RULE_COMMAND_NAME,
-        enact
+        () => enact(context)
     )
 
     context.subscriptions.push(disposable)
