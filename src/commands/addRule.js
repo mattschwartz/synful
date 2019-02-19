@@ -66,11 +66,24 @@ const showSetRuleNameInputBox = rulesetName => {
     })
 }
 
+const getWorkingRulesetOrNew = context => {
+    const workingRuleset = context.workspaceState.get(CURRENT_WORKING_RULESET)
+
+    return vscode.window.showQuickPick({
+        label: '',
+        description: '',
+        detail: ''
+    })
+}
+
 /**
  * Performs the addRule command
  * @param {vscode.ExtensionContext} context
  */
 const enact = context => {
+    if (getWorkingRulesetOrNew(context)) {
+        return
+    }
     const activeFilepath = vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.fileName
     if (!activeFilepath) {
         console.error('[cmd::addRule::FAILED] no file open - cannot apply rules!')
@@ -79,7 +92,7 @@ const enact = context => {
     }
 
     console.log('[cmd::addRule] applying rules to current file:', activeFilepath)
-    const workingRuleset = 'logs_ruleset' || context.workspaceState.get(CURRENT_WORKING_RULESET)
+    const workingRuleset = context.workspaceState.get(CURRENT_WORKING_RULESET)
 
     // If no currently selected ruleset, ask user what ruleset should be named
     if (!workingRuleset) {
